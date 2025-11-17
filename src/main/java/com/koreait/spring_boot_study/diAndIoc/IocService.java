@@ -33,7 +33,7 @@ public class IocService {
 
      */
 
-    @Autowired //시점 (2)에서 주입
+   // @Autowired //시점 (2)에서 주입
     private IocRepository iocRepository;
 
     @Autowired //시점 (1)에서 주입

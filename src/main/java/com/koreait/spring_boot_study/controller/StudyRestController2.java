@@ -38,7 +38,7 @@ public class StudyRestController2 {
 
     @GetMapping("/profiles")
     public List<?> getProfiles() {
-        List<Map<String, String>> myData = new ArrayList<>();
+        List<Map<String, String>> myData = new ArrayList<> ();
         Map<String, String> data1 = Map.of(
                 "name", "홍길동",
                 "address", "부산시 연제구"
