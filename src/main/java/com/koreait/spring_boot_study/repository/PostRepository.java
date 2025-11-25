@@ -10,34 +10,82 @@ import java.util.Optional;
 
 @Repository
 public class PostRepository {
-    //CRUD(생성, 조회, 수정, 삭제)
-    //DB대용 필드 -sql쿼리로 DB에서 데이터를 받아옴(주로 List로)
-    private List<Post> posts=new ArrayList<>(
+    // CRUD(생성, 조회, 수정, 삭제)
+    // DB 대용 필드 - sql쿼리로 DB에서 데이터를 받아옴(주로 List로)
+    private List<Post> posts = new ArrayList<>(
             Arrays.asList(
-                    new Post(1,"페이커vs손흥민","누가 이김?"),
-                    new Post(2,"박지성vs손흥민","누가 이김?"),
-                    new Post(3,"피카츄vs하이츄","누가 이김?"),
-                    new Post(4,"스프링부트공부중","반복 ㄱㄱ")
+                    new Post(1, "페이커 vs 손흥민", "누가 이김?"),
+                    new Post(2, "박지성 vs 손흥민", "누가 이김?"),
+                    new Post(3, "피카츄 vs 라이츄", "누가 이김?"),
+                    new Post(4, "스프링부트 공부중", "반복 ㄱㄱ")
             )
     );
-    
-    //전체 게시글 조회,글 제목 조회
-    public List<Post> findALlPost(){
+
+    // 전체게시글 조회 구현, 글제목 조회
+    public List<Post> findAllPosts() {
         return posts;
     }
-    //게시글 단건 조회,글제목 조회
-    public String findPost(int id){
-        Optional<Post> optionalPost=posts.stream()
-                .filter(post->post.getId()==id)
-                .findFirst(); //객체가 있으면  Optional로 감싸서 리턴
-        // 없으면 null Optional로 감싸서 리턴
-        
-        if(optionalPost.isEmpty()){
-            return "해당 id 상품 없음";
-        }
-        String targgetName=optionalPost.get().getTitle();
-        
-        return targgetName;
+
+    // 게시글 단건 조회 구현, 글제목 조회
+    public Optional<Post> findPostById(int id) {
+        return posts.stream()
+                .filter(post -> post.getId() == id)
+                .findFirst();
+        // 객체가 있으면 객체를 Optional로 감싸서 리턴
+        // 없으면 null을 Optional로 감싸서 리턴
     }
-    
+
+    // 단건 추가
+    public int insertPost(String title, String content) {
+        // maxId
+        int maxId = 0;
+        for(Post post: posts) {
+            if(post.getId() > maxId) {
+                maxId = post.getId();
+            }
+        } // auto_increment 기능
+        Post post = new Post(maxId + 1, title, content);
+        posts.add(post); // sql insert 쿼리
+
+        return 1;
+    }
+
+   public int deletePostById(int id){
+        //id가 검증이 안되면 return 0
+       //Optional<>-> 코드를 선언하는 쪽에서 타입을 지정하겠다:제네릭
+       Optional<Post> target=posts.stream()
+               .filter(p->p.getId()==id)
+               .findFirst();
+
+       if(target.isEmpty()){
+           return 0;
+       }
+      Post post=target.get();
+       posts.remove(post);
+       return 1;
+   }
+
+
+   //단건 업데이트 by id and entity
+    public int udpatePost(int id,String title,String content){
+        Post target=null;
+        for(Post post:posts){
+            if(post.getId()==id){
+                target=post;
+                break;
+            }
+        }
+        if(target==null){
+            return 0;
+        }
+
+        int index=posts.indexOf(target); //기존객체:target
+        //외부에서 가져온 데이터로 객체를 새로 생성(newPost)
+        Post newPost=new Post(id,title,content);
+        posts.set(index,newPost); //해당 index(target이 있던 자리)에 새로만든 newPost를 덮어씌워 주세요
+
+        return 1;
+    }
+
+
 }
