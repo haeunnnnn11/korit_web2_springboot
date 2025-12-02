@@ -2,11 +2,17 @@ package com.koreait.spring_boot_study.service;
 
 import com.koreait.spring_boot_study.dto.AddProductReqDto;
 import com.koreait.spring_boot_study.dto.ModifyProductReqDto;
+import com.koreait.spring_boot_study.dto.ProductQuantityResDto;
+import com.koreait.spring_boot_study.dto.Top3SellingProductResDto;
+import com.koreait.spring_boot_study.entity.OrderDetail;
 import com.koreait.spring_boot_study.entity.Product;
 import com.koreait.spring_boot_study.exception.ProductInsertException;
 import com.koreait.spring_boot_study.exception.ProductNotFoundException;
-import com.koreait.spring_boot_study.repository.ProductRepository;
+import com.koreait.spring_boot_study.model.Top3SellingProduct;
+import com.koreait.spring_boot_study.repository.ProductRepo;
+import com.koreait.spring_boot_study.repository.mapper.ProductMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -15,10 +21,22 @@ import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
-    private ProductRepository productRepository;
+
+    // 인터페이스타입으로 필드를 가지고 있음
+    // private ProductRepo productRepository;
+    private ProductMapper productRepository;
 
     @Autowired
-    public ProductService(ProductRepository productRepository) {
+    public ProductService(ProductMapper productRepository) {
+        /*
+        ProductRepo -> 인터페이스
+        인터페이스 타입의 객체는 존재하지 x -> 구현체가 있나 Ioc컨테이너를 검사
+        ProductJdbcRepo, ProductRepository 둘다 ProductRepo를 implements 받았음
+        여러개인 경우가 되어버림 -> 우선순위를 지정해줘서 해결 할 수 있다.
+        1. 필드 변수명과 bean 이름이 같으면 매칭
+        2. @Qualifier 사용
+        3. @Primary를 사용
+        */
         this.productRepository = productRepository;
     }
 
@@ -63,15 +81,73 @@ public class ProductService {
         }
     }
 
-    //5.상품업데이트
-    public void modifyProduct(int id, ModifyProductReqDto dto){
-       int successCount= productRepository
-               .updateProduct(id,dto.getName(),dto.getPrice());
-
-       if(successCount<=0){
-           throw new ProductNotFoundException("해당 상품은 존재하지 않습니다");
-       }
-
+    // 5. 상품업데이트
+    public void modifyProduct(int id, ModifyProductReqDto dto) {
+        int successCount = productRepository
+                .updateProduct(id, dto.getName(), dto.getPrice());
+        if(successCount <= 0) {
+            throw new ProductNotFoundException("해당 상품은 존재하지 않습니다.");
+        }
     }
 
+    // Top3 상품들 리턴해주는 메서드(model을 리턴하면 안됨)
+    public List<Top3SellingProductResDto> getTop3SellingProduct() {
+        List<Top3SellingProduct> results = productRepository.findTop3SellingProducts();
+        List<Top3SellingProductResDto> outputs = new ArrayList<>();
+        for(Top3SellingProduct result : results) {
+            Top3SellingProductResDto dto
+                    = Top3SellingProductResDto.from(result);
+
+            outputs.add(dto);
+        }
+        return outputs;
+//        return productRepository.findTop3SellingProducts().stream()
+//                // 메서드참조로 축약할 수 있다.
+//                .map(model -> Top3SellingProductResDto.from(model))
+//                .collect(Collectors.toList());
+    }
+
+    public List<ProductQuantityResDto> getProductQuantitiesById(int productId){
+        //Product 객체를 가져옴(orderDetails 필드(list)를 mybatis가 알아서 채워옴)
+        Product product = productRepository
+                .findProductWithQuantities(productId);
+        //만약에 A entity가 B를 가지고 있고
+        //B entity가 A를 가지고 있을 수 있음
+        //a.getB().get A().getB().getA()......  -> 자바에서는 문제가 안됨
+        // -> 양방향 설정을 왠만하면 쓰지 말자.
+
+        //옵셔널이 아니라서 null체크를 해준다
+        //product가 null이거나,필드에 있는 List<OrderDetail>이 null이면
+        if(product == null || product.getOrderDetails() == null){
+            return List.of(); //비어있는 리스트 리턴
+        }
+
+        List<ProductQuantityResDto> resultData = new ArrayList<>();
+
+        //stream Api 사용하는 버전
+        resultData = product.getOrderDetails() //List<OrderDetail>
+                .stream() //Stream<OrderDetail>
+                .map(od -> new ProductQuantityResDto(
+                        //od.getProduct() -> xml에 정의하지 않았기 때문에 null(단방향)
+                        product.getName(),
+                        product.getPrice(),
+                        od.getQuantity()
+                )) //Stream<ProductQuantityResDto>
+                .collect(Collectors.toList());
+
+        //for문을 사용하는 버전
+/*    for(OrderDetail od : product.getOrderDetails()){
+        ProductQuantityResDto dto = new ProductQuantityResDto(
+                product.getName(),
+                product.getPrice(),
+                od.getQuantity()
+        );
+        resultData.add(dto);
+    }
+*/
+
+        return resultData;
+    }
 }
+
+

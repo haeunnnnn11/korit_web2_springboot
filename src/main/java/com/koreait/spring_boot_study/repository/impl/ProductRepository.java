@@ -1,4 +1,4 @@
-package com.koreait.spring_boot_study.repository;
+package com.koreait.spring_boot_study.repository.impl;
 
 import com.koreait.spring_boot_study.entity.Product;
 import lombok.extern.slf4j.Slf4j;
@@ -121,4 +121,9 @@ public class ProductRepository {
         products.set(index,newProduct); //target이 있던 자리에 newProduct가 저장됨
 
         return 1;
-    }}
+    }
+
+    public Arrays findTop3SellingProducts() {
+        return null;
+    }
+}

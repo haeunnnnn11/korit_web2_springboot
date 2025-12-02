@@ -4,13 +4,16 @@ import com.koreait.spring_boot_study.dto.AddProductReqDto;
 import com.koreait.spring_boot_study.dto.ModifyProductReqDto;
 import com.koreait.spring_boot_study.service.ProductService;
 import jakarta.validation.Valid;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+
 @RequestMapping("/product")
+
 public class ProductController {
     private ProductService productService;
 
@@ -43,25 +46,49 @@ public class ProductController {
                 .body("성공");
     }
 
-    //localhost:8080/product/1-DELETE
+    // localhost:8080/product/1 - DELETE
+    // DELETE 요청은 body를 포함할 수 있지만, 잘 사용하지 않는다.
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteProduct(@PathVariable int id){
+    public ResponseEntity<?> deleteProduct(@PathVariable int id) {
         productService.removeProduct(id);
         return ResponseEntity.ok("삭제 완료");
     }
 
-    //왜 RequestBody로 id까지 전달받지 않고
-    //굳이 PathVariable로 id는 따로 받아오나요
-    //->RESTful 설계: URL과 요청 MEthod만으로도 뭐하는지 예측할 수 있다.
-    //localhost:8080/prodect/1 PUT -> product에 1번 자원을 수정하는 것
+    // 왜 RequestBody로 id까지 전달받지 않고,
+    // 굳이 PathVariable로 id는 따로 받아오나요?
+    // -> RESTful 설계: URL과 요청 Method만으로도 뭐하는지 예측할 수 있다.
+    // localhost:8080/product/1 PUT -> product에 1번 자원을 수정하는 것
+    /*
+    {
+        "name" : "무선마우스",
+        "price" : 10000
+    }
+    {
+        "name" : " ",
+        "price" : 500
+    }
+    */
+
     @PutMapping("/{id}")
-    public ResponseEntity<?> putProduct(@PathVariable int id, @Valid @RequestBody ModifyProductReqDto dto){
-        productService.modifyProduct(id,dto);
+    public ResponseEntity<?> putProduct(
+            @PathVariable int id,
+            @Valid @RequestBody ModifyProductReqDto dto
+    ) {
+        productService.modifyProduct(id, dto);
         return ResponseEntity.ok("수정완료");
     }
 
+    @GetMapping("/top3")
+    public ResponseEntity<?> top3() {
+        return ResponseEntity.ok(productService.getTop3SellingProduct());
+    }
 
+    @GetMapping ("/{productId}/quantity")
+    public ResponseEntity<?> getProductWithQuantities
+            (@PathVariable int productId){
+        return ResponseEntity.ok(productService.getProductQuantitiesById(productId));
 
+    }
 
 
 }

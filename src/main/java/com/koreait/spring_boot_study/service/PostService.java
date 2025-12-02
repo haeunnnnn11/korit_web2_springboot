@@ -1,14 +1,14 @@
 package com.koreait.spring_boot_study.service;
 
 import com.koreait.spring_boot_study.dto.AddPostReqDto;
-import com.koreait.spring_boot_study.dto.ModifyProductReqDto;
+import com.koreait.spring_boot_study.dto.ModifyPostReqDto;
 import com.koreait.spring_boot_study.dto.PostResDto;
 import com.koreait.spring_boot_study.entity.Post;
 import com.koreait.spring_boot_study.exception.PostInsertException;
 import com.koreait.spring_boot_study.exception.PostNotFoundException;
-import com.koreait.spring_boot_study.exception.ProductNotFoundException;
-import com.koreait.spring_boot_study.repository.PostRepository;
-import jakarta.validation.Valid;
+import com.koreait.spring_boot_study.repository.PostRepo;
+import com.koreait.spring_boot_study.repository.impl.PostRepository;
+import com.koreait.spring_boot_study.repository.mapper.PostMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,19 +19,19 @@ import java.util.stream.Collectors;
 @Service
 public class PostService {
 
-    private PostRepository postRepository;
+    private PostMapper postRepository;
 
     @Autowired
-    public PostService(PostRepository postRepository) {
+    public PostService(PostMapper postRepository) {
         this.postRepository = postRepository;
-    }
-
-    public static void removePost(int id) {
     }
 
     // 전체 글제목 조회
     public List<String> getAllPostNames() {
-        return null;
+        return postRepository.findAllPosts() // List<Post>
+                .stream()
+                .map(post -> post.getTitle()) // Stream<String>
+                .collect(Collectors.toList());
     }
 
     // 게시글 단건조회 : isEmpty -> 정석) 예외를 던져야함(커스텀예외)
@@ -76,14 +76,22 @@ public class PostService {
         }
     }
 
-    //게시글 단건 삭제
-    public void removePostt(int id){
-        int successCount=postRepository.deletePostById((id));
-        if(successCount<=0){ //성공건수가 0이라면
-            throw new ProductNotFoundException("게시글을 찾을 수 없음");
+    // 게시글 단건 삭제
+    public void removePost(int id) {
+        int successCount = postRepository.deletePostById(id);
+
+        if(successCount <= 0) { // 성공건수가 0이라면
+            throw new PostNotFoundException("게시글을 찾을 수 없습니다.");
         }
     }
 
-
+    // 게시글 단건 업데이트
+    public void modifyPost(int id, ModifyPostReqDto dto) {
+        int successCount = postRepository
+                .updatePost(id, dto.getTitle(), dto.getContent());
+        if(successCount <= 0) {
+            throw new PostNotFoundException("해당 게시글을 찾을 수 없습니다.");
+        }
+    }
 
 }

@@ -1,11 +1,10 @@
 package com.koreait.spring_boot_study.controller;
 
 import com.koreait.spring_boot_study.dto.AddPostReqDto;
-import com.koreait.spring_boot_study.dto.ModifyProductReqDto;
+import com.koreait.spring_boot_study.dto.ModifyPostReqDto;
 import com.koreait.spring_boot_study.dto.PostResDto;
 import com.koreait.spring_boot_study.service.PostService;
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Slf4j
 @RestController
 @RequestMapping("/post")
 public class PostController {
@@ -55,19 +53,35 @@ public class PostController {
 
     // 3. 단건 추가 컨트롤러 -> 서비스 -> 레파지토리 코드 작성
     // + Validation을 사용해봅시다!
+
     @PostMapping("/add")
     public ResponseEntity<?> addPost(
-            @Valid @RequestBody AddPostReqDto dto
+            @Valid @RequestBody AddPostReqDto dto //잭슨이 dto를 만들 때, NoArgsConstructor필요!
     ) {
         postService.addPost(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body("등록성공");
     }
 
-    //1.id를 받아서 ->게시글을 삭제하는 컨트롤러 ->서비스 ->레파지토리
+    // 1. id를 받아서 -> 게시글을 삭제하는 컨트롤러 -> 서비스 -> 레파지토리
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> removePost(@PathVariable int id){
-        postService.removePost(id); // ★ 수정된 부분
-        return ResponseEntity.ok("삭제 완료");
+    public ResponseEntity<?> removePost(@PathVariable int id) {
+        postService.removePost(id);
+        return ResponseEntity.ok("삭제완료");
     }
+
+    // 2. id와 dto를 받아서 -> 게시글을 업데이트하는 컨트롤러 -> 서비스 -> 레파지토리
+    @PutMapping("/{id}")
+    public ResponseEntity<?> modifyPost(
+            @PathVariable int id,
+            @Valid @RequestBody ModifyPostReqDto dto
+    ) {
+        postService.modifyPost(id, dto);
+        return ResponseEntity.ok("수정완료");
+    }
+
+    // 수정요청 PUT, PATCH
+    // PUT -> 전체 데이터를 갈아끼우겠다(title, content)
+    // PATCH -> 일부 데이터를 갈아끼우겠다(content)
+    // -> null을 허용해야하는 경우가 많음
 }
 
