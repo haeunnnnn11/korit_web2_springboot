@@ -30,5 +30,31 @@ public interface PostMapper {
     // 단건 업데이트 by id and entity
     int updatePost(@Param("id") int id,
                    @Param("title")String title,
-                   @Param("content") String content);
+                  @Param("content") String content);
+
+    //titleKeyword 혹은 contentKeyword로 상세검색하는
+    //xml,mapper,service,controller 작성
+
+    List<Post> searchDetailPosts(
+            @Param("titleKeyword") String titleKeyword,
+            @Param("contentKeyword") String contentKeyword
+    );
+
+    //2.Post+Comment 조인 조회
+    /*
+    최종 결과
+    postTitle:~
+    postContent:~
+    comment:[
+        '댓글 1',
+        '댓글 2',
+        '댓글 3'
+    ]
+     */
+
+    Optional<Post> findPostWithComments(int id);
+
+    //post 다건입력 xml,service, controller
+    int insertPosts(List<Post> posts);
+
 }

@@ -4,8 +4,9 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### 시크릿 ###
+### 시크릿 (github에 올라가지 말라고 쓴것)###
 src/main/resources/application-secret.yaml
+application-secret.yaml
 
 ### STS ###
 .apt_generated

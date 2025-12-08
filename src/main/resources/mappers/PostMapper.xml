@@ -11,11 +11,24 @@ resultMap으로 지정해주면 됩니다.) -> interface의 시그니처를 따�
 -> 인터페이스의 메서드 시그니처를 인식해서 알아서 옵셔널로 포장해서 리턴해준다.
 -->
 <mapper namespace="com.koreait.spring_boot_study.repository.mapper.PostMapper">
+
+    <!-- PostJdbcRepo에 있는 rsToPost 메서드와 동일한 역할 -->
     <resultMap id="postMap" type="com.koreait.spring_boot_study.entity.Post">
+        <!-- PK 매핑 -->
         <id property="id" column="id" />
+        <!-- 기본 필드 매핑(기본자료형) -->
         <result property="title" column="title" />
         <result property="content" column="content" />
+        <!-- 타 엔티티 필드 매핑 (1:N, N:1..)-->
+        <collection property="comments" resultMap="commentMap" javaType="list" />
     </resultMap>
+    <resultMap id="commentMap" type="com.koreait.spring_boot_study.entity.Comment">
+        <id property="commentId" column="comment_id" />
+        <result property="commentContent" column="comment_content" />
+    </resultMap>
+
+
+
 
     <select id="findAllPosts" resultMap="postMap">
         select
@@ -43,29 +56,69 @@ resultMap으로 지정해주면 됩니다.) -> interface의 시그니처를 따�
 
     <insert id="insertPost">
         insert into
-            post(title,content)
+        post (title, content)
         values
-            (#{title},#{content})
-
-
+        (#{title}, #{content})
     </insert>
     <delete id="deletePostById">
         delete from
-            post
+        post
         where
-            id=#{id}
-
-
+        id = #{id}
     </delete>
-
     <update id="updatePost">
         update
-            post
+        post
         set
-            title=#{title}
-            content=#{content}
+        title = #{title},
+        content = #{content}
         where
-            id=#{id}
-
+        id = #{id}
     </update>
+
+    <select id="searchDetailPosts" resultMap="postMap">
+        select
+        id,
+        title,
+        content
+        from
+        post
+        where
+        1=1
+        <if test="titleKeyword != null and titleKeyword != ''">
+            and title like CONCAT('%', #{titleKeyword} ,'%')
+        </if>
+        <if test="contentKeyword != null and contentKeyword != ''">
+            and content like CONCAT('%', #{contentKeyword}, '%')
+        </if>
+        order by
+        id
+    </select>
+
+    <select id="findPostWithComments" resultMap="postMap">
+        select
+        p.id,
+        p.title,
+        p.content,
+        c.comment_id,
+        c.comment_content
+        from
+        post p
+        left join comment c
+        on p.id = c.post_id
+        where
+        p.id = #{id}
+        order by
+        c.comment_id
+    </select>
+
+    <insert id="inserProducts">
+        insert into
+            product(post_title,post_content)
+        values
+
+            <foreach collection="posts" item="post" separator=",">
+                (#{post.title},#{post.content})
+            </foreach>
+    </insert>
 </mapper>

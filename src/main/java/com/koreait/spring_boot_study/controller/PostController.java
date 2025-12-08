@@ -1,8 +1,10 @@
 package com.koreait.spring_boot_study.controller;
 
-import com.koreait.spring_boot_study.dto.AddPostReqDto;
-import com.koreait.spring_boot_study.dto.ModifyPostReqDto;
-import com.koreait.spring_boot_study.dto.PostResDto;
+import com.koreait.spring_boot_study.dto.req.AddPostReqDto;
+import com.koreait.spring_boot_study.dto.req.ModifyPostReqDto;
+import com.koreait.spring_boot_study.dto.req.SearchPostReqDto;
+import com.koreait.spring_boot_study.dto.res.PostResDto;
+import com.koreait.spring_boot_study.dto.res.PostWithCommentsResDto;
 import com.koreait.spring_boot_study.service.PostService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,5 +85,32 @@ public class PostController {
     // PUT -> 전체 데이터를 갈아끼우겠다(title, content)
     // PATCH -> 일부 데이터를 갈아끼우겠다(content)
     // -> null을 허용해야하는 경우가 많음
-}
+
+
+    @GetMapping("/search")
+    public ResponseEntity<?> searchPosts(
+            //RequestParam을 지정하면 반드시 값이 있어야 한다
+            //없으면 400에러를 응답
+            @RequestParam(required = false) String titleKeyword,
+            @RequestParam(required = false) String contentkeyword
+    ){
+        SearchPostReqDto dto=new SearchPostReqDto(titleKeyword,contentkeyword);
+
+        return ResponseEntity.ok(
+                postService.searchDetailPosts(dto)
+        );
+    }
+
+    @GetMapping("/{id}/comments")
+    public  ResponseEntity<?> getPostWithComments(@PathVariable int id){
+        PostWithCommentsResDto dto=postService.getPostWithComments(id);
+        return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping("/add/bulk")
+    public ResponseEntity<?> addPosts(@RequestBody @Valid List<AddPostReqDto> dtoList){
+        postService.addPosts(dtoList);
+        return ResponseEntity.status(HttpStatus.CREATED).body("전체 게시글 등록 성공"+dtoList.size()+"건");
+    }}
+
 

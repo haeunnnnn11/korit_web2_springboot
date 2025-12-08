@@ -1,19 +1,19 @@
 package com.koreait.spring_boot_study.service;
 
-import com.koreait.spring_boot_study.dto.AddProductReqDto;
-import com.koreait.spring_boot_study.dto.ModifyProductReqDto;
-import com.koreait.spring_boot_study.dto.ProductQuantityResDto;
-import com.koreait.spring_boot_study.dto.Top3SellingProductResDto;
-import com.koreait.spring_boot_study.entity.OrderDetail;
+import com.koreait.spring_boot_study.dto.req.AddProductReqDto;
+import com.koreait.spring_boot_study.dto.req.ModifyProductReqDto;
+import com.koreait.spring_boot_study.dto.req.SearchProductReqDto;
+import com.koreait.spring_boot_study.dto.res.ProductQuantityResDto;
+import com.koreait.spring_boot_study.dto.res.SearchProductResDto;
+import com.koreait.spring_boot_study.dto.res.Top3SellingProductResDto;
 import com.koreait.spring_boot_study.entity.Product;
 import com.koreait.spring_boot_study.exception.ProductInsertException;
 import com.koreait.spring_boot_study.exception.ProductNotFoundException;
 import com.koreait.spring_boot_study.model.Top3SellingProduct;
-import com.koreait.spring_boot_study.repository.ProductRepo;
 import com.koreait.spring_boot_study.repository.mapper.ProductMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -148,6 +148,64 @@ public class ProductService {
 
         return resultData;
     }
+    //dto-req,res 2가지
+    //req: nameKeyword,minPrice,maxPrice
+    //res: id가 필요하면 id까지 dto에 작성하여 리턴한다.
+    public List<SearchProductResDto> searchDetailProducts(
+            SearchProductReqDto dto
+    ){
+        List<Product> products=productRepository.searchDetailProducts(
+                dto.getNameKeyword(),
+                dto.getMinPrice(),
+                dto.getMaxPrice()
+        );
+        if(products==null||products.isEmpty()){
+            throw new ProductNotFoundException("조건에 맞는 상품이 없습니다");
+        }
+
+        List<SearchProductResDto> dtos = new ArrayList<>();
+        //1.stream 사용하는 방법
+        dtos=products.stream()
+                .map(p-> new SearchProductResDto(
+                        p.getName(),
+                        p.getPrice()
+                ))
+                .collect(Collectors.toList());
+//        //2.for문 사용방법
+//        for(Product p:products){
+//            SearchProductResDto resDto=new SearchProductResDto(p.getName(),p.getPrice());
+//            dtos.add(resDto);
+//
+//        }
+        return dtos;
+    }
+
+    //트랜잭션
+    //해당 메서드를 트랜잭션으로 실행하겠다
+    //메서드 종료 직전에 정상 종료라면,commit
+    //예외가 발생할경우 rollback
+    //어노테이션만 설정하면 , 스프링부트가 알아서 db로
+    //start transaction,commit,rollback 쿼리를 삽입해서 송신한다.
+
+    @Transactional(rollbackFor = Exception.class)
+    public void addProducts(List<AddProductReqDto> dtoList){
+        //List<dto> ->List<entity> 변환
+        List<Product> products = dtoList.stream()
+                .map(dto->Product.builder()
+                        .name(dto.getName())
+                        .price(dto.getPrice())
+                        .build())
+                .collect(Collectors.toList());
+
+        int successCount = productRepository.insertProducts(products);
+
+        //전체건수만큼 insert되지 않았다면 예외처리
+        if(successCount != products.size()){
+            throw new ProductInsertException("상품 등록 중 문제가 발생했습니다");
+        }
+    }
+
 }
+
 
 
